@@ -1,0 +1,59 @@
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+
+# Example handwritten text dataset (replace with your dataset)
+# Assume 'X' is a list of sequences (e.g., encoded characters) and 'y' is the corresponding next character
+# You need to prepare your dataset accordingly
+
+# Dummy example
+X = ['hello', 'world', 'tensorflow', 'keras', 'machine', 'learning']
+y = ['o', 'd', 'w', 's', 'e', 'g']
+
+# Character-level encoding (dummy example)
+chars = sorted(set(''.join(X)))
+char_to_idx = {ch: idx for idx, ch in enumerate(chars)}
+idx_to_char = {idx: ch for ch, idx in char_to_idx.items()}
+
+# Convert data to numerical representation
+X_encoded = np.array([[char_to_idx[ch] for ch in seq] for seq in X])
+y_encoded = np.array([char_to_idx[ch] for ch in y])
+
+# Pad sequences (assuming all sequences have the same length)
+max_len = max(len(seq) for seq in X)
+X_padded = tf.keras.preprocessing.sequence.pad_sequences(X_encoded, maxlen=max_len, padding='post')
+
+# Define the RNN model
+model = Sequential([
+    LSTM(128, input_shape=(max_len, len(chars))),
+    Dropout(0.2),
+    Dense(len(chars), activation='softmax')
+])
+
+# Compile the model
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
+
+# Train the model
+model.fit(X_padded, y_encoded, epochs=50, batch_size=32)
+
+# Function to generate text
+def generate_text(model, start_string, num_generate=100, temperature=1.0):
+    input_eval = [char_to_idx[ch] for ch in start_string]
+    input_eval = tf.expand_dims(input_eval, 0)
+    text_generated = []
+    
+    model.reset_states()
+    for i in range(num_generate):
+        predictions = model(input_eval)
+        predictions = tf.squeeze(predictions, 0) / temperature
+        predicted_id = tf.random.categorical(predictions, num_samples=1)[-1,0].numpy()
+        
+        input_eval = tf.expand_dims([predicted_id], 0)
+        text_generated.append(idx_to_char[predicted_id])
+    
+    return (start_string + ''.join(text_generated))
+
+# Generate new text
+generated_text = generate_text(model, start_string='hell', num_generate=100, temperature=1.0)
+print(generated_text)
