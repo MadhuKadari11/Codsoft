@@ -1,0 +1,31 @@
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+
+# Assuming 'X' contains plot summaries and 'y' contains corresponding genres
+# X should be a list/array of strings (plot summaries), y should be genre labels
+
+# Step 1: TF-IDF Vectorization
+vectorizer = TfidfVectorizer(stop_words='english', max_df=0.8)
+X_tfidf = vectorizer.fit_transform(X)
+
+# Step 2: Splitting data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_tfidf, y, test_size=0.2, random_state=42)
+
+# Step 3: Training Naive Bayes Classifier
+nb_classifier = MultinomialNB()
+nb_classifier.fit(X_train, y_train)
+
+# Step 4: Predicting on test data
+y_pred = nb_classifier.predict(X_test)
+
+# Step 5: Evaluating the model
+print(classification_report(y_test, y_pred))
+
+# Step 6: Predicting for new data
+new_plots = ["Plot summary of a new movie"]
+new_tfidf = vectorizer.transform(new_plots)
+predicted_genre = nb_classifier.predict(new_tfidf)
+print("Predicted genre:", predicted_genre)
+
