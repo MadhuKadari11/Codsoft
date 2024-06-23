@@ -1,0 +1,49 @@
+# Required Libraries
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import classification_report, accuracy_score
+
+# Step 1: Load and preprocess the dataset
+# Example: Load dataset (replace with your actual dataset)
+df = pd.read_csv('spam.csv', encoding='latin-1')
+df = df[['v1', 'v2']]  # Selecting columns 'v1' (labels) and 'v2' (SMS messages)
+df.columns = ['label', 'message']  # Renaming columns for clarity
+
+# Step 2: Data preprocessing
+# Convert label to a numerical binary variable (0 for ham, 1 for spam)
+df['label'] = df['label'].map({'ham': 0, 'spam': 1})
+
+# Step 3: Feature extraction using TF-IDF
+vectorizer = TfidfVectorizer(stop_words='english')
+X = vectorizer.fit_transform(df['message'])
+y = df['label']
+
+# Step 4: Split dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Step 5: Model selection and training
+# Using Multinomial Naive Bayes classifier
+nb_classifier = MultinomialNB()
+nb_classifier.fit(X_train, y_train)
+
+# Step 6: Model evaluation
+y_pred = nb_classifier.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.2f}')
+
+print('Classification Report:')
+print(classification_report(y_test, y_pred))
+
+# Step 7: Predicting for new SMS messages
+new_messages = [
+    "Congratulations! You've won a free cruise. Call now to claim your prize!",
+    "Hey, what are you up to later? Let's hang out."
+]
+new_tfidf = vectorizer.transform(new_messages)
+predicted_labels = nb_classifier.predict(new_tfidf)
+
+print("\nPredicted labels for new messages:")
+for message, label in zip(new_messages, predicted_labels):
+    print(f'Message: "{message}" => Predicted Label: {"spam" if label == 1 else "ham"}')
